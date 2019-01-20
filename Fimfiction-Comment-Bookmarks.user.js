@@ -5,8 +5,8 @@
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
-// @homepageURL  https://github.com/marktaiwan/FiM-Comment-Bookmarks
-// @supportURL   https://github.com/marktaiwan/FiM-Comment-Bookmarks/issues
+// @homepageURL  https://github.com/marktaiwan/Fimfiction-Comment-Bookmarks
+// @supportURL   https://github.com/marktaiwan/Fimfiction-Comment-Bookmarks/issues
 // @include      https://www.fimfiction.net/*
 // @grant        none
 // @run-at       document-start
