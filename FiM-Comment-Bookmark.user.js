@@ -1762,10 +1762,11 @@ You have bookmarked a total of <b>${totalBookmarks}</b> ${totalBookmarks == 1 ? 
     const value = e.target.value;
     e.stopPropagation();
     e.preventDefault();
-    e.target.blur();
     if (value !== '') {
       e.target.value = '';
       updateList(1);
+    } else {
+      e.target.blur();
     }
   });
   textField.addEventListener('focus', e => {
