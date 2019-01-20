@@ -1,6 +1,8 @@
 # Fimfiction Comment Bookmarks
 
-Fimfiction Comment Bookmarks is a userscript written for the My Little Pony fanfiction site [Fimfiction.net](https://www.fimfiction.net/) that allows the users to bookmark comments on the site. 
+Fimfiction Comment Bookmarks is a userscript written for the My Little Pony fanfiction site [Fimfiction.net](https://www.fimfiction.net/) that allows the users to bookmark comments on the site.
+
+![main view](https://raw.githubusercontent.com/marktaiwan/Fimfiction-Comment-Bookmarks/master/screencaps/www.fimfiction.net_.png)
 
 ## Installation
 This script requires the extension [Tampermonkey](https://tampermonkey.net/) and has been tested to work on Chrome and Firefox.
