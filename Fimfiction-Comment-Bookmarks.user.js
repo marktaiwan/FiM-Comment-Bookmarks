@@ -1116,7 +1116,6 @@ const composeComment = (() => {
       commentSnippet: commentBody, commentTimestamp: unixTimestamp} = entry;
     const key = `${commentId}${category}`;
 
-
     if (cache.has(key)) {
       const response = cache.get(key);
 
@@ -1232,6 +1231,15 @@ const toggleLivePreview = (() => {
 
     return `/ajax/comments/${ajaxCategory[category]}/${commentId}`;
   };
+
+  // remove edited comments from cache
+  document.addEventListener('bookmarkchange', (e) => {
+    const eventType = e.detail.type;
+    if (eventType == 'change' || eventType == 'remove') {
+      const {commentId, category} = event.detail.record;
+      responseCache.delete(makeURL(commentId, category));
+    }
+  });
 
   const fetchComment = (commentId, category) => {
     return new Promise((resolve, reject) => {
