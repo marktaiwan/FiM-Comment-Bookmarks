@@ -527,6 +527,19 @@ const getDB = (() => {
     });
   };
 })();
+async function clearDB() {
+  const db = await getDB();
+  const tx = db.transaction(db.objectStoreNames, 'readwrite');
+    for (const storeName of tx.objectStoreNames) {
+    const store = tx.objectStore(storeName);
+    const request = store.clear();
+    request.onerror = (e) => console.error(e.target.error);
+  }
+  tx.oncomplete = () => {
+    broadcastBookmarkChangeEvent({type: 'dbClear'});
+    window.StyledAlert('All bookmarks deleted.');
+  };
+}
 async function exportDB() {
   const db = await getDB();
   const tx = db.transaction(db.objectStoreNames, 'readonly');
@@ -567,29 +580,19 @@ function importDB() {
           Imported version: ${parsedDB.version}`);
       }
 
-      const db = await getDB();
-      for (const store of parsedDB.stores) {
+      const bookmarkStore = parsedDB.stores.find(store => store.name == 'bookmarkStore').records;
+      const articleStore = parsedDB.stores.find(store => store.name == 'articleStore').records;
 
-        function asyncTransaction(fnName, val) {
-          return new Promise((resolve, reject) => {
-            const objStore = db.transaction(store.name, 'readwrite').objectStore(store.name);
-            const request = objStore[fnName](val);
-            request.onsuccess = () => resolve();
-            request.onerror = (e) => reject(e.target.error);
-          });
-        }
+      for (const entry of bookmarkStore) {
+        const {commentId, category, commentListId} = entry;
+        if (await checkBookmark(commentId, category)) continue;
 
-        // clear the current store, then insert the new records, one per transaction
-        await asyncTransaction('clear').then(async () => {
-          for (const record of store.records) {
-            await asyncTransaction('add', record);
-          }
-        });
-
+        const article = articleStore.find(article => (article.commentListId == commentListId && article.category == category));
+        await setBookmark(entry, article);
       }
+
       broadcastBookmarkChangeEvent({type: 'dbImport'});
-      updateList(1);
-      window.alert('Comment bookmarks successfully imported.');
+      window.StyledAlert('Comment bookmarks successfully imported.');
     };
   }, {once: true});
 
@@ -615,7 +618,6 @@ function setBookmark(bookmarkEntry, articleRecord) {
     const articleRequest = tx.objectStore('articleStore').put(articleRecord);
 
     tx.oncomplete = () => {
-      broadcastBookmarkChangeEvent({type: 'add', record: {commentId, category}});
       resolve();
     };
     bookmarkRequest.onerror = (e) => {
@@ -940,7 +942,11 @@ function commentButtonHandler(event) {
       }
 
       // everything checks out, update the button
-      setBookmark(bookmarkEntry, articleRecord).then(() => toggleOn(bookmarkEntry.commentId));
+      setBookmark(bookmarkEntry, articleRecord).then(() => {
+        const {commentId, category} = bookmarkEntry;
+        toggleOn(commentId);
+        broadcastBookmarkChangeEvent({type: 'add', record: {commentId, category}});
+      });
     } else {
       deleteBookmark(bookmarkEntry.commentId, bookmarkEntry.category)
         .then(() => toggleOff(bookmarkEntry.commentId))
@@ -1106,7 +1112,7 @@ const composeComment = (() => {
       const {commentId, category} = e.detail.record;
       const key = `${commentId}${category}`;
       cache.delete(key);
-    } else if (eventType == 'dbImport') {
+    } else if (eventType == 'dbClear') {
       cache.clear();
     }
   });
@@ -1238,6 +1244,8 @@ const toggleLivePreview = (() => {
     if (eventType == 'change' || eventType == 'remove') {
       const {commentId, category} = event.detail.record;
       responseCache.delete(makeURL(commentId, category));
+    } else if (eventType == 'dbClear') {
+      responseCache.clear();
     }
   });
 
@@ -1536,8 +1544,9 @@ function initBookmarkPanel() {
             </div>
             <div class="${SCRIPT_LABEL}-options-group">
               <button class="${SCRIPT_LABEL}-options-button clickable" id="${SCRIPT_LABEL}-stats" type="button" title="View statistics">Stats</button>
-              <button class="${SCRIPT_LABEL}-options-button clickable" id="${SCRIPT_LABEL}-export-button" type="button">Export</button>
-              <button class="${SCRIPT_LABEL}-options-button clickable" id="${SCRIPT_LABEL}-import-button" type="button">Import</button>
+              <button class="${SCRIPT_LABEL}-options-button clickable" id="${SCRIPT_LABEL}-export-button" type="button" title="Backup bookmarks to file">Export</button>
+              <button class="${SCRIPT_LABEL}-options-button clickable" id="${SCRIPT_LABEL}-import-button" type="button" title="Import and merge bookmarks from backup">Import</button>
+              <button class="${SCRIPT_LABEL}-options-button clickable" id="${SCRIPT_LABEL}-clear-button" type="button" title="Delete all stored bookmarks">Clear</button>
             </div>
           </div>
         </div>
@@ -1741,9 +1750,16 @@ You have bookmarked a total of <b>${totalBookmarks}</b> ${totalBookmarks == 1 ? 
   });
 
   // import/export
-  bindClickHandlers(`#${SCRIPT_LABEL}-export-button`, exportDB);
+  bindClickHandlers(`#${SCRIPT_LABEL}-export-button`, () => {
+    window.ConfirmPrompt('Export your bookmarks to file?', exportDB);
+  });
   bindClickHandlers(`#${SCRIPT_LABEL}-import-button`, () => {
-    window.ConfirmPrompt('This will delete all currently stored bookmarks, proceed?', importDB);
+    window.ConfirmPrompt('This will add all bookmarks from the selected backup to your present collection, proceed?', importDB);
+  });
+  bindClickHandlers(`#${SCRIPT_LABEL}-clear-button`, () => {
+    window.ConfirmPrompt('This will delete all currently stored bookmarks, proceed?', () => {
+      window.ConfirmPrompt('Are you REALLY sure?', clearDB);
+    });
   });
 
   // don't navigate on relative comment links inside live preview
@@ -1823,14 +1839,17 @@ You have bookmarked a total of <b>${totalBookmarks}</b> ${totalBookmarks == 1 ? 
   });
 
   // UI update in response to database change
-  document.addEventListener('bookmarkchange', () => {
-
+  document.addEventListener('bookmarkchange', (e) => {
+    const eventType = e.detail.type;
     // update the toggle status of any bookmark button on the page
     document.querySelectorAll('div.comment').forEach(addButton);
 
     // don't update if the menu is open
-    if (menu.classList.contains('hidden')) {
-      updateList();
+    // reset to display page one on database clear or import
+    if (eventType == 'dbClear' || eventType == 'dbImport') {
+      updateList(1);
+    } else if (menu.classList.contains('hidden')) {
+      updateList(); // keep the page number
     } else {
       menu.dataset.pendingListUpdate = '1';
     }
