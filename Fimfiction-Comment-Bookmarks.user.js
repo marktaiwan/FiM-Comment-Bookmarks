@@ -1841,8 +1841,12 @@ You have bookmarked a total of <b>${totalBookmarks}</b> ${totalBookmarks == 1 ? 
   // UI update in response to database change
   document.addEventListener('bookmarkchange', (e) => {
     const eventType = e.detail.type;
-    // update the toggle status of any bookmark button on the page
-    document.querySelectorAll('div.comment').forEach(addButton);
+
+    // update the toggle status of any bookmark button on the page,
+    // skip on eventType 'change' because it wouldn't affect button toggle state
+    if (eventType != 'change') {
+      document.querySelectorAll('div.comment').forEach(addButton);
+    }
 
     // don't update if the menu is open
     // reset to display page one on database clear or import
