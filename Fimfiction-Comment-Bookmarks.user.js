@@ -1081,7 +1081,7 @@ function overlayClickHandler(e) {
 }
 function applySnippetOverlay(ele) {
   if (!ele
-    || ele.closest('.comment').classList.contains('.preview_active')
+    || ele.closest('.comment').classList.contains('preview_active')
     || ele.classList.contains('overlay')
     || ele.classList.contains('expanded')) {
       return;
