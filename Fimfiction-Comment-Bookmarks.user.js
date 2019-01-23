@@ -1291,15 +1291,7 @@ const toggleLivePreview = (() => {
           commentBody.classList.add('preview_active');
           quoteContainer.removeAttribute('fetching');
           updateBookmarkSnippet(commentId, category, quoteContainer.firstElementChild);
-          quoteContainer.querySelectorAll('.collapsed-image-container').forEach(imageContainer => {
-            const anchor = imageContainer.querySelector('.user_image_link');
-            if (!anchor) return;
-            imageContainer.appendChild(composeElement({
-              tag: 'img',
-              attributes: {src: anchor.href, class: 'user_image'}
-            }));
-          });
-          window.App.binders.forEach(fn => fn(quoteContainer));
+          window.App.BindAll(quoteContainer);
           window.App.DispatchEvent(quoteContainer, 'loadVisibleImages');
         }).catch(e => {
           console.error(e);
