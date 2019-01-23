@@ -751,12 +751,14 @@ const getPageCategory = (() => {
 })();
 function toggleOn(commentId) {
   document.querySelectorAll(`.${SCRIPT_LABEL}-bookmark-button[data-comment-id="${commentId}"]`).forEach(button => {
+    button.dataset.bookmarked = '1';
     button.querySelector('i').classList.add('fa-bookmark');
     button.querySelector('i').classList.remove('fa-bookmark-o');
   });
 }
 function toggleOff(commentId) {
   document.querySelectorAll(`.${SCRIPT_LABEL}-bookmark-button[data-comment-id="${commentId}"]`).forEach(button => {
+    button.dataset.bookmarked = '0';
     button.querySelector('i').classList.add('fa-bookmark-o');
     button.querySelector('i').classList.remove('fa-bookmark');
   });
@@ -2018,6 +2020,27 @@ function initUI() {
   creationObserver('#dimmers .dimmer, body>.drop-down-pop-up-container', target => {
     if (document.getElementById(`${SCRIPT_LABEL}--pop-up-wrapper`).classList.contains('hidden')) return;
     target.style.zIndex = '10000';
+  });
+
+  // detect comment edit and apply updateBookmarkSnippet
+  creationObserver('.comment_data', target => {
+    const processMutationEvent = async (mutation) => {
+      const comment = mutation.target.closest('.comment');
+
+      // check for edit button and if element is not hidden
+      if (comment.querySelector('[data-click="toggleEditComment"]') && !mutation.target.classList.contains('hidden')) {
+        const button = comment.querySelector(`.${SCRIPT_LABEL}-bookmark-button`);
+        const commentId = Number.parseInt(button.dataset.commentId);
+        const category = button.dataset.commentCategory;
+        if (button.dataset.bookmarked == '1') {
+          updateBookmarkSnippet(commentId, category, comment);
+        }
+      }
+
+    };
+    new MutationObserver(mutationRecords => {
+      mutationRecords.forEach(processMutationEvent);
+    }).observe(target, {attributeFilter: ['class']});
   });
 
   initBookmarkPanel();
