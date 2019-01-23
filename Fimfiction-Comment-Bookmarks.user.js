@@ -1121,8 +1121,10 @@ const composeComment = (() => {
       const response = cache.get(key);
 
       //  resetting stylings
-      response.classList.remove('preview_active');
       response.querySelector(`.${SCRIPT_LABEL}-snippet`).classList.remove('expanded');
+      response.classList.remove('preview_active');
+      const quoteContainer = response.querySelector('.quote_container');
+      if (quoteContainer.childElementCount) quoteContainer.firstElementChild.remove();
 
       return response;
     }
@@ -1218,17 +1220,23 @@ const composeComment = (() => {
 })();
 const toggleLivePreview = (() => {
   const responseCache = new Map();
-  const fetchComment = (id, cat) => {
+
+  const makeURL = (commentId, category) => {
+    const ajaxCategory = {
+      story: 'story_comments',
+      group: 'comments_group',
+      group_forum: 'comments_group_thread',
+      blog: 'blog_posts_comments',
+      user: 'comments_user_page'
+    };
+
+    return `/ajax/comments/${ajaxCategory[category]}/${commentId}`;
+  };
+
+  const fetchComment = (commentId, category) => {
     return new Promise((resolve, reject) => {
       const cacheMaxAge = 3600; // 3600 seconds == 1 hour
-      const ajaxCategory = {
-        story: 'story_comments',
-        group: 'comments_group',
-        group_forum: 'comments_group_thread',
-        blog: 'blog_posts_comments',
-        user: 'comments_user_page'
-      };
-      const fetchURL = `/ajax/comments/${ajaxCategory[cat]}/${id}`;
+      const fetchURL = makeURL(commentId, category);
       const response = responseCache.get(fetchURL);
       if (response && (Math.floor((Date.now() - response.timestamp) / 1e3) < cacheMaxAge)) {
         resolve(response.body);
@@ -1255,12 +1263,12 @@ const toggleLivePreview = (() => {
 
     if (quoteContainer.hasAttribute('fetching')) return;
 
-    if (quoteContainer.childElementCount) {
-      commentBody.classList.toggle('preview_active');  // Preview already fetched
+    if (commentBody.classList.contains('preview_active')) {
+      quoteContainer.firstElementChild.remove();
+      commentBody.classList.remove('preview_active');
       applySnippetOverlay(snippet);
     } else {
       quoteContainer.setAttribute('fetching', '');
-
       fetchComment(commentId, category)
         .then(responseHTML => {
           quoteContainer.innerHTML = responseHTML;
@@ -1663,6 +1671,7 @@ function initBookmarkPanel() {
     } else {
       menu.querySelectorAll('.expanded').forEach(ele => ele.classList.remove('expanded'));
       menu.querySelectorAll('.preview_active').forEach(ele => ele.classList.remove('preview_active'));
+      menu.querySelectorAll('.quote_container > *').forEach(ele => ele.remove());
     }
   }, false);
 
