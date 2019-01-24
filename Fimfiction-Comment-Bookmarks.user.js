@@ -1045,6 +1045,11 @@ function plaintext(comment) {
       listItem.normalize();
     }
   }
+  // linebreak for some elements
+  for (const ele of body.querySelectorAll('blockquote, ul, ol')) {
+    ele.insertAdjacentText('beforebegin', '\n');
+    ele.insertAdjacentText('afterend', '\n');
+  }
   // process blockquotes, create a treewalker to iterate over all the text nodes in the comment,
   // count the number of <blockquote> until comment root, and prepend '>' accordingly
   let walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
@@ -1076,11 +1081,6 @@ function plaintext(comment) {
       }
       node = node.parentElement;
     }
-  }
-  // linebreak for some elements
-  for (const ele of body.querySelectorAll('blockquote, ul, ol')) {
-    ele.insertAdjacentText('beforebegin', '\n');
-    ele.insertAdjacentText('afterend', '\n');
   }
   // double linkbreak after paragraph
   for (const paragraph of body.querySelectorAll('p')) {
