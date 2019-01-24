@@ -974,6 +974,10 @@ function plaintext(comment) {
     quote.insertAdjacentText('afterbegin', '@');
     quote.normalize();
   }
+  // horizontal rule
+  for (const ele of body.querySelectorAll('hr')) {
+    ele.parentElement.replaceChild(document.createTextNode('\n------\n'), ele);
+  }
   // process emotes, replace all <img> with its 'alt' attribute (e.g. :rainbowhuh:)
   for (const emote of body.querySelectorAll('img.emoticon')) {
     emote.parentElement.replaceChild(document.createTextNode(emote.alt), emote);
@@ -1045,27 +1049,42 @@ function plaintext(comment) {
   // count the number of <blockquote> until comment root, and prepend '>' accordingly
   let walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) {
+    const currentNode = walker.currentNode;
+    let node, firstTextNodeInLine;
 
-    if (walker.currentNode.nodeValue == ''
-      || !walker.currentNode.parentElement.matches('blockquote > *')
-      || (walker.currentNode != walker.currentNode.parentElement.firstChild
-        && walker.currentNode.previousSibling.nodeName != 'BR'
-        && !walker.currentNode.parentElement.matches('blockquote > ol, blockquote > ul'))
+    if (!currentNode.parentElement.matches('blockquote *')) continue;
+
+    node = currentNode;
+    firstTextNodeInLine = true;
+    while (firstTextNodeInLine && node.parentElement.nodeName != 'BLOCKQUOTE') {
+      firstTextNodeInLine = (node == node.parentElement.firstChild || node.previousSibling.nodeName == 'BR');
+      node = node.parentElement;
+    }
+
+    if (currentNode.nodeValue == ''
+      || (!currentNode.parentElement.matches('blockquote > *') && !firstTextNodeInLine)
+      || (currentNode != currentNode.parentElement.firstChild
+        && currentNode.previousSibling.nodeName != 'BR'
+        && !currentNode.parentElement.matches('blockquote > ol, blockquote > ul'))
     ) continue; // Look on my works, and despair.
 
-    const node = walker.currentNode;
-    let currentNode = node.parentElement;
-    while (currentNode !== body) {
-      if (currentNode.tagName == 'LI') break;
-      if (currentNode.tagName == 'BLOCKQUOTE') {
-        node.nodeValue = '>' + node.nodeValue;
+    node = currentNode.parentElement;
+    while (node !== body) {
+      if (node.tagName == 'LI') break;
+      if (node.tagName == 'BLOCKQUOTE') {
+        currentNode.nodeValue = '>' + currentNode.nodeValue;
       }
-      currentNode = currentNode.parentElement;
+      node = node.parentElement;
     }
   }
-  // linebreak for paragraphs
+  // linebreak for some elements
+  for (const ele of body.querySelectorAll('blockquote, ul, ol')) {
+    ele.insertAdjacentText('beforebegin', '\n');
+    ele.insertAdjacentText('afterend', '\n');
+  }
+  // double linkbreak after paragraph
   for (const paragraph of body.querySelectorAll('p')) {
-    paragraph.appendChild(document.createTextNode('\n\n'));
+    paragraph.insertAdjacentText('afterend', '\n\n');
   }
   // <br>
   for (const br of body.querySelectorAll('br')) {
