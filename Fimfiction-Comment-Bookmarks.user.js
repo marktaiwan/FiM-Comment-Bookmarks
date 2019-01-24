@@ -979,11 +979,8 @@ function plaintext(comment) {
     emote.parentElement.replaceChild(document.createTextNode(emote.alt), emote);
   }
   // process image embeds
-  for (const span of body.querySelectorAll('.collapsed-image-container')) {
-    span.innerText = '[image embed]';
-  }
-  for (const img of body.querySelectorAll('.user_image')) {
-    img.insertAdjacentHTML('afterend', '[image embed]');
+  for (const ele of body.querySelectorAll('.collapsed-image-container, .user_image')) {
+    ele.parentElement.replaceChild(document.createTextNode('[image embed]'), ele);
   }
   // process other embeds
   for (const embed of body.querySelectorAll('.bbcode-embed, .oembed')) {
@@ -1048,7 +1045,13 @@ function plaintext(comment) {
   // count the number of <blockquote> until comment root, and prepend '>' accordingly
   let walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
   while (walker.nextNode()) {
-    if (walker.currentNode.nodeValue == '') continue;
+
+    if (walker.currentNode.nodeValue == ''
+      || !walker.currentNode.parentElement.matches('blockquote > *')
+      || (walker.currentNode != walker.currentNode.parentElement.firstChild
+        && walker.currentNode.previousSibling.nodeName != 'BR'
+        && !walker.currentNode.parentElement.matches('blockquote > ol, blockquote > ul'))
+    ) continue; // Look on my works, and despair.
 
     const node = walker.currentNode;
     let currentNode = node.parentElement;
@@ -1532,7 +1535,7 @@ function initBookmarkPanel() {
         <div class="${SCRIPT_LABEL}-flex-wrapper">
           <div class="${SCRIPT_LABEL}-options-bar">
             <div class="${SCRIPT_LABEL}-options-group ${SCRIPT_LABEL}-flex-grow">
-              Display setting: 
+              Display setting:
               <button class="${SCRIPT_LABEL}-options-button" id="${SCRIPT_LABEL}-comment-collapse" type="button" title="Collapse all comment snippets by default">Compact view</button>
               <button class="${SCRIPT_LABEL}-options-button" id="${SCRIPT_LABEL}-comment-pagination" type="button" title="Display 50 items per page">Pagination</button>
             </div>
