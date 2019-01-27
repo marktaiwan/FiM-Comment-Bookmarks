@@ -401,9 +401,6 @@ function initCSS() {
 .preview_active .${SCRIPT_LABEL}-preview.quote_container {
   display: block;
 }
-.${SCRIPT_LABEL}-preview.quote_container .user_image[data-resizable=true] {
-  cursor: default;
-}
 #${SCRIPT_LABEL}--pop-up-wrapper.hidden,
 .${SCRIPT_LABEL}-article-container .${SCRIPT_LABEL}-comment-container,
 .${SCRIPT_LABEL}-comment-container .hidden-when-nested,
