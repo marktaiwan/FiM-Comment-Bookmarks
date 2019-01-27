@@ -1331,7 +1331,8 @@ function updateList(pageNumber) {
   const container = document.getElementById(`${SCRIPT_LABEL}-list-container`);
   if (!container) return;
 
-  const sortMethod = getLocalStorage('sort-method');
+  const sortMethod = container.dataset.sortMethod;
+  const sortDirection = container.dataset.sortDirection;
   const ITEMS_PER_PAGE = 50;
 
 
@@ -1349,12 +1350,16 @@ function updateList(pageNumber) {
   }
 
   Promise.all([getAllRecords('bookmarkStore', bookmarkIndexName), getAllRecords('articleStore', 'articleTitle')]).then(records => {
-    const sortDirection = getLocalStorage('sort-direction');
     const [commentRecords, articleRecords] = records;
 
     const matchRecord = (record, property, query) => (record[property] && record[property].toLowerCase().indexOf(query.toLowerCase()) != -1);
 
-    const temp = getLocalStorage('category_filter');
+    const temp = {};
+    for (const button of document.getElementById(`${SCRIPT_LABEL}-filter`).querySelectorAll('[data-filter-type]')) {
+      const type = button.dataset.filterType;
+      temp[type] = button.classList.contains('active');
+    }
+
     const categoryFilter = {
       story: temp['story'],
       blog: temp['blog'],
@@ -1838,12 +1843,16 @@ You have bookmarked a total of <b>${totalBookmarks}</b> ${totalBookmarks == 1 ? 
   // dropdown menus
   const sortMethod = getLocalStorage('sort-method');
   const sortDirection = getLocalStorage('sort-direction');
+  menu.querySelector(`#${SCRIPT_LABEL}-list-container`).dataset.sortMethod = sortMethod;
+  menu.querySelector(`#${SCRIPT_LABEL}-list-container`).dataset.sortDirection = sortDirection;
+
   let select;
   select = menu.querySelector(`#${SCRIPT_LABEL}-sorting`);
   select.value = sortMethod;
   select.addEventListener('change', e => {
     const sortMethod = e.target.value;
     setLocalStorage('sort-method', sortMethod);
+    menu.querySelector(`#${SCRIPT_LABEL}-list-container`).dataset.sortMethod = sortMethod;
     updateList(1);
   });
   select = menu.querySelector(`#${SCRIPT_LABEL}-sorting-direction`);
@@ -1851,6 +1860,7 @@ You have bookmarked a total of <b>${totalBookmarks}</b> ${totalBookmarks == 1 ? 
   select.addEventListener('change', e => {
     const sortDirection = e.target.value;
     setLocalStorage('sort-direction', sortDirection);
+    menu.querySelector(`#${SCRIPT_LABEL}-list-container`).dataset.sortDirection = sortDirection;
     updateList(1);
   });
 
