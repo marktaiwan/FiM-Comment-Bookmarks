@@ -760,40 +760,81 @@ function toggleOff(commentId) {
     button.querySelector('i').classList.remove('fa-bookmark');
   });
 }
-function addButton(comment) {
-  const buttons = comment.querySelector('.comment_information .buttons');
 
-  if (buttons === null || comment.closest(`#${SCRIPT_LABEL}-list-container`)) return; // deleted messages or is bookmark preview
+const addButton = (() => {
 
-  const commentId = Number.parseInt(comment.dataset.comment_id);
-  const category = getPageCategory();
+  const callbackId = new WeakMap();
 
-  checkBookmark(commentId, category).then(isBookmarked => {
-    const bookmarkButton = buttons.querySelector(`.${SCRIPT_LABEL}-bookmark-button`) || composeElement({
-      tag: 'a',
-      attributes: {title: 'Bookmark this comment', class: `${SCRIPT_LABEL}-bookmark-button`, dataCommentId: commentId, dataCommentCategory: category},
-      children: [{
-        tag: 'i',
-        attributes: {class: 'fa fa-fw'}
-      },{
-        tag: 'span',
-        text: 'Bookmark'
-      }]
+  const io = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      const comment = entry.target;
+      if (entry.isIntersecting) {
+
+        const id = window.requestAnimationFrame(() => {
+          callbackId.delete(comment);
+          observer.unobserve(comment);
+          comment.removeAttribute(`${SCRIPT_LABEL}-observer-pending`);
+          execAddButton(comment);
+        });
+        callbackId.set(comment, id);
+
+      } else {
+
+        const id = callbackId.get(comment);
+        window.cancelAnimationFrame(id);
+        callbackId.delete(comment);
+
+      }
     });
+  }, {rootMargin: '100px'});
 
-    buttons.insertBefore(bookmarkButton, buttons.firstChild);
-    if (isBookmarked) {
-      toggleOn(commentId);
-      updateBookmarkSnippet(commentId, category, comment);
-    } else {
-      toggleOff(commentId);
+  function execAddButton(comment) {
+    const commentId = Number.parseInt(comment.dataset.comment_id);
+    const category = getPageCategory();
+
+    checkBookmark(commentId, category).then(isBookmarked => {
+      if (isBookmarked) {
+        toggleOn(commentId);
+        updateBookmarkSnippet(commentId, category, comment);
+      } else {
+        toggleOff(commentId);
+      }
+    });
+  }
+
+  return (comment) => {
+    const buttons = comment.querySelector('.comment_information .buttons');
+    if (buttons === null || comment.closest(`#${SCRIPT_LABEL}-list-container`)) return; // deleted messages or is bookmark preview
+
+    const commentId = Number.parseInt(comment.dataset.comment_id);
+    const category = getPageCategory();
+    if (!buttons.querySelector(`.${SCRIPT_LABEL}-bookmark-button`)) {
+      const anchor = composeElement({
+        tag: 'a',
+        attributes: {title: 'Bookmark this comment', class: `${SCRIPT_LABEL}-bookmark-button`, dataCommentId: commentId, dataCommentCategory: category},
+        children: [{
+          tag: 'i',
+          attributes: {class: 'fa fa-fw'}
+        },{
+          tag: 'span',
+          text: 'Bookmark'
+        }]
+      });
+
+      buttons.insertBefore(anchor, buttons.firstChild);
     }
-  });
-}
+
+    if (!comment.hasAttribute(`${SCRIPT_LABEL}-observer-pending`)) {
+      comment.setAttribute(`${SCRIPT_LABEL}-observer-pending`, '');
+      io.observe(comment);
+    }
+  };
+})();
+
 function commentButtonHandler(event) {
   const button = event.target.closest(`.${SCRIPT_LABEL}-bookmark-button`);
 
-  if (!button) return;
+  if (!button || !button.hasAttribute('data-bookmarked')) return;
 
   const comment = button.closest('.comment');
   const commentList = comment.closest('.comment_list');
