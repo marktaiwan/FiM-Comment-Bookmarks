@@ -2066,7 +2066,10 @@ function initUI() {
     list.addEventListener('click', commentButtonHandler);
   });
 
-  creationObserver('div.comment', addButton);
+  creationObserver('div.comment', comment => {
+    comment.removeAttribute(`${SCRIPT_LABEL}-observer-pending`);
+    addButton(comment);
+  });
 
   // override the z-index on the author popup
   // 10000 because that's the z-index of the top navigation bars when it's in fixed mode
