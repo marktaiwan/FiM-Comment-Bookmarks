@@ -946,8 +946,8 @@ function commentButtonHandler(event) {
           break;
         }
         case 'blog': {
-          const postTitle = document.querySelector('.blog-post-content-box h1 a').textContent;
-          const blogAuthor = document.querySelector('.user-page-header h1 a[href^="/user/"]').textContent;
+          const postTitle = document.querySelector('.blog-post-content-box h1 a[href^="/blog/"]').textContent;
+          const blogAuthor = document.querySelector('.blog-page .information_box a[href^="/user/"]').textContent;
 
           articleRecord.title = postTitle;
           articleRecord.author = blogAuthor;
@@ -1084,7 +1084,7 @@ function plaintext(comment) {
     }
   }
   // linebreak for some elements
-  for (const ele of body.querySelectorAll('blockquote, ul, ol')) {
+  for (const ele of body.querySelectorAll('blockquote, ul, ol, code')) {
     ele.insertAdjacentText('beforebegin', '\n');
     ele.insertAdjacentText('afterend', '\n');
   }
@@ -1352,7 +1352,9 @@ const toggleLivePreview = (() => {
           quoteContainer.innerHTML = responseHTML;
           commentBody.classList.add('preview_active');
           quoteContainer.removeAttribute('fetching');
-          updateBookmarkSnippet(commentId, category, quoteContainer.firstElementChild);
+          if (quoteContainer.querySelector('.comment_data')) {
+            updateBookmarkSnippet(commentId, category, quoteContainer.firstElementChild);
+          }
           window.App.BindAll(quoteContainer);
           window.App.DispatchEvent(quoteContainer, 'loadVisibleImages');
         }).catch(e => {
@@ -2097,7 +2099,7 @@ function initUI() {
 
   // detect comment edit and apply updateBookmarkSnippet
   creationObserver('.comment_data', target => {
-    const processMutationEvent = async (mutation) => {
+    const processMutationEvent = (mutation) => {
       const comment = mutation.target.closest('.comment');
 
       // check for edit button and if element is not hidden
