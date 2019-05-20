@@ -1510,12 +1510,15 @@ function updateList(pageNumber) {
         const comments = article.comments;
 
         let displayTitle;
+        let displayAuthor;
         switch (category) {
           case 'story': case 'blog': case 'group_forum':
-          displayTitle = `${article.title}${(article.author) ? ' - ' : ''}`;
+            displayTitle = `${article.title}${(article.author) ? ' - ' : ''}`;
+            displayAuthor = article.author;
             break;
           case 'user': case 'group':
-          displayTitle = `${article.title}`;
+            displayTitle = `${article.title}`;
+            displayAuthor = '';
             break;
         }
         const articleElement = composeElement({
@@ -1529,7 +1532,7 @@ function updateList(pageNumber) {
               tag: 'span', text: displayTitle
             },{
               tag: 'span',
-              children: [{tag: 'i', text: article.author}]
+              children: [{tag: 'i', text: displayAuthor}]
             }]
           },{
             tag: 'ul', attributes: {class: `${SCRIPT_LABEL}-comment-container`}
