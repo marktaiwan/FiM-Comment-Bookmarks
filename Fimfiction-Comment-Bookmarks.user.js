@@ -527,7 +527,7 @@ const getDB = (() => {
 async function clearDB() {
   const db = await getDB();
   const tx = db.transaction(db.objectStoreNames, 'readwrite');
-    for (const storeName of tx.objectStoreNames) {
+  for (const storeName of tx.objectStoreNames) {
     const store = tx.objectStore(storeName);
     const request = store.clear();
     request.onerror = (e) => console.error(e.target.error);
@@ -1054,6 +1054,7 @@ function plaintext(comment) {
   // headings
   for (const heading of body.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
 
+    /* eslint-disable no-fallthrough */
     /* Yes. They are all meant to fallthrough */
     let prefix = '';
     switch (heading.tagName) {
@@ -1064,6 +1065,8 @@ function plaintext(comment) {
       case 'H2': prefix += '#';
       case 'H1': prefix += '#';
     }
+    /* eslint-enable no-fallthrough */
+
     heading.insertAdjacentText('afterbegin', prefix + ' ');
     heading.insertAdjacentText('beforeend', '\n');
     heading.normalize();
@@ -1152,7 +1155,7 @@ function applySnippetOverlay(ele) {
     || ele.closest('.comment').classList.contains('preview_active')
     || ele.classList.contains('overlay')
     || ele.classList.contains('expanded')) {
-      return;
+    return;
   }
 
   const overflow = (ele.scrollHeight > ele.clientHeight || ele.scrollWidth > ele.clientWidth);
@@ -1419,23 +1422,23 @@ function updateList(pageNumber) {
 
     const keepArticle = [];
     const matchedComments = commentRecords.map(comment => {
-        // denormalize the title for easier filtering in the next step
-        const article = articleRecords.find(record => (record.commentListId == comment.commentListId && record.category == comment.category));
-        comment.title = article.title;
-        comment.postAuthor = article.author;
-        return comment;
-      })
-      .filter(comment => {
-        // find the comments we want to display
-        if (!categoryFilter[comment.category]) return false;
+      // denormalize the title for easier filtering in the next step
+      const article = articleRecords.find(record => (record.commentListId == comment.commentListId && record.category == comment.category));
+      comment.title = article.title;
+      comment.postAuthor = article.author;
+      return comment;
+    })
+    .filter(comment => {
+      // find the comments we want to display
+      if (!categoryFilter[comment.category]) return false;
 
-        return ((!doTextSearch)
-          || (searchType.author && matchRecord(comment, 'commentAuthor', queryString))
-          || (searchType.comment && matchRecord(comment, 'commentSnippet', queryString))
-          || (searchType.title && matchRecord(comment, 'chapterName', queryString))
-          || (searchType.title && matchRecord(comment, 'title', queryString))
-          || (searchType.title && matchRecord(comment, 'postAuthor', queryString)));
-      });
+      return ((!doTextSearch)
+        || (searchType.author && matchRecord(comment, 'commentAuthor', queryString))
+        || (searchType.comment && matchRecord(comment, 'commentSnippet', queryString))
+        || (searchType.title && matchRecord(comment, 'chapterName', queryString))
+        || (searchType.title && matchRecord(comment, 'title', queryString))
+        || (searchType.title && matchRecord(comment, 'postAuthor', queryString)));
+    });
 
     matchedComments.forEach(({commentListId, category}) => keepArticle.push({commentListId, category}));
     // keep a record of article entries for displaying in 'post' view
@@ -2077,11 +2080,11 @@ function initUI() {
   // 10000 because that's the z-index of the top navigation bars when it's in fixed mode
   creationObserver('.info-card-container', target => {
     function toggle(card) {
-        if (document.getElementById(`${SCRIPT_LABEL}--pop-up-wrapper`).classList.contains('hidden')) {
-          card.style.zIndex = '';
-        } else {
-          card.style.zIndex = '10000';
-        }
+      if (document.getElementById(`${SCRIPT_LABEL}--pop-up-wrapper`).classList.contains('hidden')) {
+        card.style.zIndex = '';
+      } else {
+        card.style.zIndex = '10000';
+      }
     }
     new MutationObserver(mutationRecords => {
       mutationRecords.forEach(mutation => {
