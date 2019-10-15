@@ -13,6 +13,8 @@
 // @noframes
 // ==/UserScript==
 
+(function () {
+
 'use strict';
 const SCRIPT_LABEL = 'markers_comment_bookmarks';
 const CATEGORY_LIST = ['story', 'blog', 'user', 'group', 'group_forum'];
@@ -2130,3 +2132,5 @@ function initUI() {
 initLocalStorage();
 initCSS();
 onReady(initUI);
+
+})();
