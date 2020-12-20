@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Fimfiction Comment Bookmarks
 // @description  Comment bookmarking on Fimfiction.net
-// @version      1.0.7
+// @version      1.0.8
 // @author       Marker
 // @license      MIT
 // @namespace    https://github.com/marktaiwan/
@@ -2130,7 +2130,7 @@ function initUI() {
 }
 
 initLocalStorage();
-initCSS();
+onReady(initCSS);
 onReady(initUI);
 
 })();
